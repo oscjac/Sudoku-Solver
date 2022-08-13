@@ -108,17 +108,12 @@ bool Board::col_valid(int col)
 
 bool Board::solved()
 {
-    for (int i = 0; i < 9; ++i)
-    {
-        if (!board_boxes[i].valid())
+    if (!valid())
+        return false;
+    auto itr = begin();
+    while (itr != end())
+        if (itr->value == 0)
             return false;
-    }
-    for (int i = 0; i < 9; ++i)
-    {
-        bool col = col_valid(i), row = row_valid(i);
-        if (!row || !col)
-            return false;
-    }
     return true;
 }
 
@@ -182,8 +177,20 @@ Board::Iterator Board::end()
     return Iterator(node);
 }
 
+void Board::delete_nodes()
+{
+    Node *node = root;
+    while (node->next)
+    {
+        node = node->next;
+        delete node->prev;
+    }
+    delete node;
+}
+
 Board::~Board()
 {
+    delete_nodes();
     delete[] board_boxes;
 }
 
