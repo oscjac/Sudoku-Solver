@@ -1,9 +1,9 @@
-#include <fstream>
+#include <sstream>
 #include <iostream>
+#include "cli.h"
 
 namespace SudokuSolver
 {
-
     struct square
     {
         int value;
@@ -95,6 +95,9 @@ namespace SudokuSolver
         // Reads input and creates board, allocates memory
         Board(std::istream &input);
 
+        // Creates board from command line arguments
+        Board(Args &arguments);
+
         // Sets square to new value if empty. Overwrites current value if not empty. If square is constant, does nothing.
         void set_square(int row, int col, int value);
 
@@ -103,6 +106,9 @@ namespace SudokuSolver
 
         // Represent board in standard output stream
         void output_board(std::ostream &out);
+
+        // Representation of the board as a string of integers. Ends with a \n
+        std::string as_string();
 
         // Returns true if the board is valid.
         bool valid();

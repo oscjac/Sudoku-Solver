@@ -54,7 +54,6 @@ void SudokuSolver::show_solve(Board *board, std::ostream &out)
             --itr;
             while (itr->constant)
                 --itr;
-
             continue;
         }
         if (board->valid())

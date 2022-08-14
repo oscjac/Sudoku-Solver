@@ -10,7 +10,10 @@ Board::Board(std::istream &input) : board_boxes(new Box[9]), root(nullptr)
     int i = 0;
     while (input >> n and i < 81)
     {
-        k[i++] = static_cast<int>(n) - 48; // NOT SAFE. Should replace with safe way to read in input
+        int char_as_int = static_cast<int>(n);
+        if (char_as_int < 48 || char_as_int > 57)
+            throw std::runtime_error("Board input should only contain integers");
+        k[i++] = char_as_int - 48;
     }
     if (i < 81 || !input.eof())
     {
@@ -22,6 +25,19 @@ Board::Board(std::istream &input) : board_boxes(new Box[9]), root(nullptr)
         board_boxes[grid_i] = Box(k + grid_i * 9),
         board_boxes[grid_i + 1] = Box(k + grid_i * 9 + 3),
         board_boxes[grid_i + 2] = Box(k + grid_i * 9 + 6);
+    }
+}
+
+Board::Board(Args &arguments) : board_boxes(new Box[9]), root(nullptr)
+{
+    int container[81];
+    arguments.fill(container);
+    for (int i = 0; i < 3; ++i)
+    {
+        int grid_i = i * 3;
+        board_boxes[grid_i] = Box(container + grid_i * 9),
+        board_boxes[grid_i + 1] = Box(container + grid_i * 9 + 3),
+        board_boxes[grid_i + 2] = Box(container + grid_i * 9 + 6);
     }
 }
 
@@ -60,9 +76,14 @@ void Board::output_board(std::ostream &out)
     // Board data
     for (int i = 0; i < 81; ++i)
     {
+        int n = get_square(i / 9, i % 9).value;
         if (i % 9 == 0)
             out << i / 9 + 1 << " ";
-        out << "|" << get_square(i / 9, i % 9).value;
+        out << "|";
+        if (n)
+            out << n;
+        else
+            out << " ";
         if (i % 9 == 8)
             out << "|\n";
     }
@@ -112,7 +133,7 @@ bool Board::solved()
         return false;
     auto itr = begin();
     while (itr != end())
-        if (itr->value == 0)
+        if ((itr++)->value == 0)
             return false;
     return true;
 }
@@ -179,6 +200,8 @@ Board::Iterator Board::end()
 
 void Board::delete_nodes()
 {
+    if (!root)
+        return;
     Node *node = root;
     while (node->next)
     {
@@ -186,6 +209,15 @@ void Board::delete_nodes()
         delete node->prev;
     }
     delete node;
+}
+
+std::string Board::as_string()
+{
+    std::ostringstream out;
+    for (auto itr = begin(); itr != end(); ++itr)
+        out << std::to_string(itr->value);
+    out << "\n";
+    return out.str();
 }
 
 Board::~Board()

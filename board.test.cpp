@@ -1,6 +1,5 @@
 #define BOOST_TEST_MODULE Board_Test_module
 #include <boost/test/included/unit_test.hpp>
-#include <string>
 #include "board.h"
 
 using namespace SudokuSolver;
@@ -19,7 +18,24 @@ BOOST_AUTO_TEST_CASE(board_from_file)
     correct << correct_fin.rdbuf();
     BOOST_TEST(correct.str() == output.str(), "\n" + correct.str() + "\n!=\n" + output.str());
 }
-
+BOOST_AUTO_TEST_CASE(file_with_incorrect_character)
+{
+    std::istringstream in("0%5078342B0|0410604670]950)08040000050600a2900000908058049{0003000050020051360000");
+    try
+    {
+        Board wrong(in);
+        BOOST_ERROR("Constructor should throw a runtime error");
+    }
+    catch (const std::runtime_error)
+    {
+        return;
+    }
+    catch (const std::exception &e)
+    {
+        std::cout << e.what();
+        BOOST_ERROR("Constructor should throw a runtime error");
+    }
+}
 BOOST_AUTO_TEST_CASE(board_from_short_file)
 {
     std::ifstream fin("short_input.txt");
@@ -29,13 +45,13 @@ BOOST_AUTO_TEST_CASE(board_from_short_file)
         Board from_file(fin);
         BOOST_ERROR("Constructor should throw a runtime error due to short input");
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error)
     {
-        BOOST_TEST(true);
         return;
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         BOOST_ERROR("Error should be a runtime error");
     }
 }
@@ -47,15 +63,15 @@ BOOST_AUTO_TEST_CASE(board_from_long_file)
     try
     {
         Board from_file(fin);
-        BOOST_ERROR("COnstructor should throw a runtime error due to long input");
+        BOOST_ERROR("Constructor should throw a runtime error due to long input");
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error)
     {
-        BOOST_TEST(true);
         return;
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         BOOST_ERROR("Error should be a runtime error");
     }
 }
@@ -71,14 +87,15 @@ BOOST_AUTO_TEST_CASE(set_negative_square)
         delete board;
         BOOST_ERROR("set_square should throw a runtime error");
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error)
     {
         delete board;
         BOOST_TEST(true);
         return;
     }
-    catch (std::exception)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         delete board;
         BOOST_ERROR("set_square should throw a runtime error");
         return;
@@ -94,14 +111,15 @@ BOOST_AUTO_TEST_CASE(set_square_with10)
         delete board;
         BOOST_ERROR("set_square should throw a runtime error");
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error)
     {
         delete board;
         BOOST_TEST(true);
         return;
     }
-    catch (std::exception)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         delete board;
         BOOST_ERROR("set_square should throw a runtime error");
         return;
@@ -120,11 +138,11 @@ BOOST_AUTO_TEST_CASE(set_square_invalid_row)
     catch (std::logic_error e)
     {
         delete board;
-        BOOST_TEST(true);
         return;
     }
-    catch (std::exception)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         delete board;
         BOOST_ERROR("set_square should throw a runtime error");
         return;
@@ -139,11 +157,11 @@ BOOST_AUTO_TEST_CASE(set_square_invalid_col)
         board->set_square(4, 11, 5);
         delete board;
         BOOST_ERROR("set_square should throw a runtime error");
+        return;
     }
-    catch (std::logic_error e)
+    catch (std::logic_error)
     {
         delete board;
-        BOOST_TEST(true);
         return;
     }
     catch (std::exception)
@@ -165,7 +183,7 @@ BOOST_AUTO_TEST_CASE(iterator_ctor)
         BOOST_TEST(true);
         delete board;
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
         BOOST_TEST(false, e.what());
         delete board;
@@ -239,13 +257,14 @@ BOOST_AUTO_TEST_CASE(dereference_nullptr)
         delete board;
         BOOST_ERROR("Should throw a runtime error");
     }
-    catch (std::runtime_error e)
+    catch (const std::runtime_error &e)
     {
         delete board;
         BOOST_TEST(true, "Cannot dereference a nullptr");
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         BOOST_ERROR("Should throw a runtime error");
         delete board;
     }
@@ -266,7 +285,7 @@ BOOST_AUTO_TEST_CASE(arrow_operator_nullptr)
         delete board;
         BOOST_TEST(true, "Should throw a runtime error");
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
         delete board;
         std::cout << e.what();
@@ -274,18 +293,43 @@ BOOST_AUTO_TEST_CASE(arrow_operator_nullptr)
     }
 }
 BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_CASE(board_solved)
+{
+    std::ifstream fin("std_input.txt");
+    Board *board = new Board(fin);
+    solve(board);
+    std::ostringstream actual;
+    board->output_board(actual);
+    std::ostringstream correct;
+    std::ifstream solution("std_input.solution.txt");
+    correct << solution.rdbuf();
+    BOOST_ASSERT(actual.str() == correct.str());
+    BOOST_TEST(board->solved(), "The board is solved");
+    delete board;
+}
+BOOST_AUTO_TEST_CASE(board_as_string)
+{
+    std::ifstream fin("std_input.txt");
+    Board *board = new Board(fin);
+    std::ifstream correct("std_input.txt");
+    std::ostringstream _correct;
+    _correct << correct.rdbuf();
+    std::string actual = board->as_string(), _correct_str = _correct.str();
+    BOOST_TEST(_correct_str == actual);
+    delete board;
+}
 BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE(grid_tests)
-BOOST_AUTO_TEST_SUITE(grid_constructor)
-BOOST_AUTO_TEST_CASE(grid_std_ctor)
+BOOST_AUTO_TEST_SUITE(box_tests)
+BOOST_AUTO_TEST_SUITE(box_constructor)
+BOOST_AUTO_TEST_CASE(box_std_ctor)
 {
     Box *box = new Box();
     for (int i = 0; i < 9; ++i)
         BOOST_TEST(box->operator[](i).value == 0);
     delete box;
 }
-BOOST_AUTO_TEST_CASE(grid_undefined_ctor)
+BOOST_AUTO_TEST_CASE(box_undefined_ctor)
 {
     int *values = new int[8];
     try
@@ -295,19 +339,20 @@ BOOST_AUTO_TEST_CASE(grid_undefined_ctor)
         delete box;
         BOOST_ERROR("Constructor should throw a runtime error");
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error)
     {
         delete[] values;
         BOOST_TEST(true);
         return;
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         delete[] values;
         BOOST_ERROR("Constructor should throw a runtime error\n");
     }
 }
-BOOST_AUTO_TEST_CASE(grid_negative_value_ctor)
+BOOST_AUTO_TEST_CASE(box_negative_value_ctor)
 {
     int *values = new int[9];
     for (int i = 0; i < 9; ++i)
@@ -319,18 +364,19 @@ BOOST_AUTO_TEST_CASE(grid_negative_value_ctor)
         delete box;
         BOOST_ERROR("Constructor should throw a run_time error");
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error)
     {
         delete[] values;
         BOOST_TEST(true);
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         delete[] values;
         BOOST_ERROR("Constructor should throw a run_time error");
     }
 }
-BOOST_AUTO_TEST_CASE(grid_invalid_value_ctor)
+BOOST_AUTO_TEST_CASE(box_invalid_value_ctor)
 {
     int *values = new int[9];
     for (int i = 0; i < 9; ++i)
@@ -342,29 +388,30 @@ BOOST_AUTO_TEST_CASE(grid_invalid_value_ctor)
         delete box;
         BOOST_ERROR("Constructor should throw a run_time error");
     }
-    catch (std::runtime_error e)
+    catch (std::runtime_error)
     {
         delete[] values;
         BOOST_TEST(true);
     }
-    catch (std::exception e)
+    catch (const std::exception &e)
     {
+        std::cout << e.what();
         delete[] values;
         BOOST_ERROR("Constructor should throw a run_time error");
     }
 }
 BOOST_AUTO_TEST_SUITE_END()
-BOOST_AUTO_TEST_SUITE(grid_is_valid_method)
-BOOST_AUTO_TEST_CASE(valid_grid)
+BOOST_AUTO_TEST_SUITE(box_is_valid_method)
+BOOST_AUTO_TEST_CASE(valid_box)
 {
     Box *box = new Box();
     for (int i = 1; i < 10; ++i)
         box->operator[](i - 1).value = i;
     bool valid = box->valid();
     delete box;
-    BOOST_TEST(valid, "Grid is valid");
+    BOOST_TEST(valid, "Box is valid");
 }
-BOOST_AUTO_TEST_CASE(duplicate_9_grid)
+BOOST_AUTO_TEST_CASE(duplicate_9_box)
 {
     Box *box = new Box();
     for (int i = 1; i < 10; ++i)
@@ -372,14 +419,14 @@ BOOST_AUTO_TEST_CASE(duplicate_9_grid)
     box->operator[](0).value = 9;
     bool valid = box->valid();
     delete box;
-    BOOST_TEST(!valid, "Grid number 9 is in index 0 and 8");
+    BOOST_TEST(!valid, "Box number 9 is in index 0 and 8");
 }
-BOOST_AUTO_TEST_CASE(grid_with_0)
+BOOST_AUTO_TEST_CASE(box_with_0)
 {
     Box *box = new Box();
     bool valid = box->valid();
     delete box;
-    BOOST_TEST(valid, "Grid only has zeroes");
+    BOOST_TEST(valid, "Box only has zeroes");
 }
 BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END()
